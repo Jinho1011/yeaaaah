@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { LoggingScreen } from '@yeaaaah/shared';
-import useQueryParam from '@yeaaaah/shared/src/hooks/useQueryParam';
-import { useRef, useState } from 'react';
+import { LoggingScreen, useQueryParams } from '@yeaaaah/shared';
+import { useRouter } from 'next/router';
+import { useMemo, useRef, useState } from 'react';
 import Spacing from '@/components/common/Spacing/Spacing';
 import { BottomFixedArea } from '@/components/common/area/BottomFixedArea';
 import PrimaryButton from '@/components/common/button/PrimaryButton';
@@ -9,20 +9,33 @@ import { Container } from '@/components/common/container/Container';
 import { Col, Row } from '@/components/common/flex/Flex';
 import Txt from '@/components/common/text/Txt';
 import TextField from '@/components/common/textField/TextField';
+import { submitForm } from '@/remotes/landing/submitForm';
 import { isEmail } from '@/utils/isEmail';
 
 export default function LandingFormSubmit() {
+  const router = useRouter();
+  const { name, type, location, bestMenu, price, target, mood } = useQueryParams({ required: true });
+
   const [email, setEmail] = useState('');
   const emailFieldRef = useRef<HTMLInputElement>(null);
-  const storeName = useQueryParam('name');
 
   const showEmailSuggestion = email.length > 1 && !isEmail(email);
 
-  const handleCtaClick = () => {};
+  const handleCtaClick = async () => {
+    try {
+      await submitForm({
+        store: { name, type, location, bestMenu, price: parseInt(price), target, mood },
+        user: { email },
+      });
+      router.push('/landing/share');
+    } catch (e) {
+      alert('잠시 후 다시 시도해주세요.');
+    }
+  };
 
   return (
     <LoggingScreen
-      id={10003027}
+      id={100004}
       params={{
         screen_name: 'landing_submit',
       }}
@@ -52,7 +65,7 @@ export default function LandingFormSubmit() {
         </Col>
         <Col justifyContent="center" alignItems="center">
           <Txt align="center" size="1.6rem" height={24} color="#28292C">
-            이메일을 남겨주시면 <Txt color="#ed801d">{storeName}</Txt>에 대한
+            이메일을 남겨주시면 <Txt color="#ed801d">{name}</Txt>에 대한
           </Txt>
           <Txt align="center" size="1.6rem" height={24} color="#28292C">
             예비 고객님들의 의견을 모아 전달해드릴게요.
@@ -77,8 +90,11 @@ export default function LandingFormSubmit() {
   );
 }
 
-function EmailSuggestion({ email, onClick }: { email: string; onClick: (v: string) => void }) {
-  const domains = ['naver.com', 'gmail.com', 'hanmail.net'];
+const EmailSuggestion = ({ email, onClick }: { email: string; onClick: (v: string) => void }) => {
+  const suggestions = useMemo(() => ['naver.com', 'gmail.com', 'hanmail.net'], []);
+  const [local, domain] = email.split('@');
+
+  const suggestedDomains = suggestions.filter(v => v.includes(domain) || domain == null);
 
   return (
     <Col
@@ -93,10 +109,10 @@ function EmailSuggestion({ email, onClick }: { email: string; onClick: (v: strin
         zIndex: 1200,
       }}
     >
-      {domains.map(domain => {
-        const autoCompletedEmail = `${email}@${domain}`;
+      {suggestedDomains.map(v => {
+        const autoCompletedEmail = `${local}@${v}`;
         return (
-          <div key={domain} css={{ padding: '12px' }} onClick={() => onClick(autoCompletedEmail)}>
+          <div key={email + v} css={{ padding: '12px' }} onClick={() => onClick(autoCompletedEmail)}>
             <Txt size="1.6rem" height={24} color="#575961">
               {autoCompletedEmail}
             </Txt>
@@ -105,4 +121,4 @@ function EmailSuggestion({ email, onClick }: { email: string; onClick: (v: strin
       })}
     </Col>
   );
-}
+};
