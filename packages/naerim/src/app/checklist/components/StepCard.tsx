@@ -27,9 +27,10 @@ export default function StepCard({ step }: StepCardProps) {
         borderRadius: 12,
         border: '1px solid',
         borderColor: 'base.white/10',
+        mb: 4,
       })}
     >
-      <Label typography={'l3'}>Step 1</Label>
+      <Label typography={'l3'}>Step {step.id}</Label>
       <Spacing size={10} />
       <Text color={'content.strong'} typography={'t2'}>
         {step.title}
